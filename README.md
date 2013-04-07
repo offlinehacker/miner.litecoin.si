@@ -27,5 +27,5 @@ Installation:
 	sudo ln -fs $(pwd)/<config name>.nix /etc/nixos/configuration.nix
 	sudo ln -fs $(pwd)/password.nix /etc/nixos/password.nix
 
-	# Rebuild config 
+	# Rebuild system
 	sudo nixos-rebuild switch
