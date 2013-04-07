@@ -1,7 +1,11 @@
 { config, pkgs, modulesPath, ... }:
 
+with pkgs.lib;
+
 {
-  require = [ "${modulesPath}/virtualisation/amazon-image.nix" ];
+  require = [
+    "${modulesPath}/virtualisation/amazon-image.nix" 
+  ];
 
   swapDevices = [
     { device = "/var/swapfile"; }
@@ -10,15 +14,25 @@
   security.sudo.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
-  users.extraUsers.offlinehacker =
+  environment.shellInit = ''export PATH=~/bin/:$PATH'';
+
+  users.extraUsers.admin =
     { description = "me, the admin";
-      home = "/home/offlinehacker";
+      home = "/home/admin";
       createHome = true;
       useDefaultShell = true;
       extraGroups = ["wheel" "users"];
       group = "users";
-      openssh.authorizedKeys.keys = ["ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC3/Zo9NvIC+qzmSR5xjZUZMOaMi8ZZZ+6t3mSasdGg+Es51Qg8chz77bO4Qf++VZaMO+NBwzWyvaYvf284zpQMRWmTR6ODvj/LQNuo5/DdAhFXrNmEndfWU7gs3TreTdUGCTJo5Vgkc9WpxP/BJuA3OGrhMWUVzhlmRpYAi9/n3I2EuOvD8Ws1P92qD5oGIP1Vgn1lWXp6XinbWpVsbjzJRYQ7igIr7P/XgFVVzZylKBDepJKCMoC9e1C3M6IHRX57IUCif2E7PZ/r6PWp0UQ2fR7bC5YVqniUp5so7IxlaX4rD6yFuVsrGN8tBVMRHzIck/7XCZmRcQyc6V7FGOQp offlinehacker@ip-10-98-19-15.ec2.internal"];
+      openssh.authorizedKeys.keys = (import ./password.nix).adminKeys;
     };
+
+  system.activationScripts.binbash = stringAfter [ "binsh" ]
+    ''
+      # Create the required /bin/bash symlink;
+      mkdir -m 0755 -p /bin
+      ln -sfn "${config.system.build.binsh}/bin/sh" /bin/.bash.tmp
+      mv /bin/.bash.tmp /bin/bash # atomically replace /bin/sh
+    '';
 
   services = {
 
@@ -35,7 +49,7 @@
 
     zabbixServer = {
       enable = true;
-      dbPassword = "test";
+      dbPassword = (import ./password.nix).zabbix;
     };
 
     httpd = {

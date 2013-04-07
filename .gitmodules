@@ -1,0 +1,3 @@
+[submodule "git-encrypt"]
+	path = git-encrypt
+	url = https://github.com/shadowhand/git-encrypt
