@@ -52,6 +52,19 @@ with pkgs.lib;
       dbPassword = (import ./password.nix).zabbix;
     };
 
+    openvpn.servers = {
+      server =
+        let
+          keyFile = pkgs.writeText "static.key" (import ./password.nix).openvpn;
+        in {
+          config = ''
+            dev tun
+            ifconfig 10.8.0.1 10.8.0.2
+            secret ${keyFile}
+          '';
+        };
+    };
+
     httpd = {
       enable = true;
       multiProcessingModule = "worker";
