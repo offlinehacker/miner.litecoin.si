@@ -20,12 +20,16 @@ Installation:
 	git config filter.encrypt.smudge "gitcrypt smudge"
 	git config filter.encrypt.clean "gitcrypt clean"
 	git config diff.encrypt.textconv "gitcrypt diff"
-	git --reset hard HEAD
+	git reset --hard HEAD
 
 	# Install config
 	ln -s ../miner.bitcoin.si/bin ../bin
 	sudo ln -fs $(pwd)/<config name>.nix /etc/nixos/configuration.nix
 	sudo ln -fs $(pwd)/password.nix /etc/nixos/password.nix
+    sudo ln -fs $(pwd)/keys /etc/nixos/keys
 
 	# Rebuild system
 	sudo nixos-rebuild switch
+
+NOTE: If you are having problems with decrypting files, you should remove them and
+then perform `git reset --hard HEAD` again.

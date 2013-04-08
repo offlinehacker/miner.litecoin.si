@@ -1,1 +1,3 @@
 password.nix filter=encrypt diff=encrypt
+keys/* filter=encrypt diff=encrypt
+
