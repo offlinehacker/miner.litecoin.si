@@ -55,12 +55,20 @@ with pkgs.lib;
     openvpn.servers = {
       server =
         let
-          keyFile = pkgs.writeText "static.key" (import ./password.nix).openvpn;
+          # We should write text files, to maintain production stable system
+          # if user changes config
+          ca = pkgs.writeText "ca.crt" (builtins.readFile ./keys/ca.crt);
+          cert = pkgs.writeText "miner.crt" (builtins.readFile ./keys/miner.crt);
+          key = pkgs.writeText "miner.key" (builtins.readFile ./keys/miner.key);
+          dh = pkgs.writeText "dh1024.pem" (builtins.readFile ./keys/dh1024.pem);
         in {
           config = ''
             dev tun
-            ifconfig 10.8.0.1 10.8.0.2
-            secret ${keyFile}
+            ca ${ca}
+            cert ${cert}
+            key ${key}
+            dh ${dh}
+            server 10.4.0.0 255.255.255.0
           '';
         };
     };
