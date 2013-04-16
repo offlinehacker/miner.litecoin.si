@@ -30,9 +30,10 @@ with pkgs.lib;
   services.xserver.videoDrivers = ["ati_unfree"];
   services.xserver.exportConfiguration = true;
 
-  system.activationScripts.drifix = stringAfter [ "binsh" ]
+  system.activationScripts.drifix =
     ''
       # Create the required /usr/lib/dri/fglrx_dri.so;
+      mkdir -p /usr/lib/dri
       ln -fs /run/opengl-driver/lib/fglrx_dri.so /usr/lib/dri/fglrx_dri.so
     '';
 
@@ -49,9 +50,37 @@ with pkgs.lib;
       openssh.authorizedKeys.keys = (import ./password.nix).adminKeys;
     };
 
+  services.openvpn.servers = {
+      client =
+        let
+          # We should write text files, to maintain production stable system
+          # if user changes config
+          ca = pkgs.writeText "ca.crt" (builtins.readFile ./keys/ca.crt);
+          cert = pkgs.writeText "miner.crt" (builtins.readFile ./keys/worker.crt);
+          key = pkgs.writeText "miner.key" (builtins.readFile ./keys/worker.key);
+          dh = pkgs.writeText "dh1024.pem" (builtins.readFile ./keys/dh1024.pem);
+        in {
+          config = ''
+            client
+            remote miner.litecoin.si
+            dev tun
+            ca ${ca}
+            cert ${cert}
+            key ${key}
+            dh ${dh}
+
+            log /var/log/openvpn.log
+            verb 6
+          '';
+        };
+    };
+
+
   environment = {
    systemPackages = with pkgs; [
      cgminer
+     git
+     openssl
    ];
 
    etc.opencl = {
