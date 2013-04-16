@@ -8,7 +8,6 @@
   ];
 
   boot.initrd.kernelModules = [ "ahci" "ohci_hcd" "ehci_hcd" "pata_atiixp" "firewire_ohci" "xhci_hcd" "pata_jmicron" "usbstorage" ];
-  boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
   nix.maxJobs = 4;
