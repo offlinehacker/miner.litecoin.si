@@ -7,7 +7,7 @@
     <nixos/modules/installer/scan/not-detected.nix>
   ];
 
-  boot.initrd.kernelModules = [ "ahci" "ohci_hcd" "ehci_hcd" "pata_atiixp" "firewire_ohci" "xhci_hcd" "pata_jmicron" "usbstorage" ];
+  boot.initrd.kernelModules = [ "ata_piix" "mptspi" "ahci" "ohci_hcd" "ehci_hcd" "pata_atiixp" "firewire_ohci" "xhci_hcd" "pata_jmicron" "usb_storage" ];
   boot.extraModulePackages = [ ];
 
   nix.maxJobs = 4;

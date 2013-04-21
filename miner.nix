@@ -11,7 +11,8 @@ with pkgs.lib;
       ./hardware.nix
     ];
 
-  networking.hostName = "labelflash.miner.litecoin.si";
+  networking.hostName = "worker.miner.litecoin.si";
+  networking.nameservers = [ "8.8.8.8" "4.4.4.4" ];
 
   # Select internationalisation properties.
   i18n = {
@@ -28,13 +29,18 @@ with pkgs.lib;
   # Enable the X11 windowing system.
   services.xserver.enable = true;
   services.xserver.videoDrivers = ["ati_unfree"];
-  services.xserver.exportConfiguration = true;
+  services.xserver.exportConfiguration = false;
 
   system.activationScripts.drifix =
     ''
       # Create the required /usr/lib/dri/fglrx_dri.so;
       mkdir -p /usr/lib/dri
       ln -fs /run/opengl-driver/lib/fglrx_dri.so /usr/lib/dri/fglrx_dri.so
+    '';
+
+  system.activationScripts.xorg =
+    ''
+      LD_LIBRARY_PATH=/run/opengl-driver/lib:/run/opengl-driver-32/lib ${pkgs.linuxPackages.ati_drivers_x11}/bin/aticonfig --initial --adapter=all --output=/etc/X11/xorg.conf
     '';
 
   security.sudo.enable = true;
@@ -75,13 +81,38 @@ with pkgs.lib;
         };
     };
 
+  systemd.services."cgminer" = {
+    after = [ "display-manager.target" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [ pkgs.cgminer ];
+    environment = { 
+      LD_LIBRARY_PATH = ''/run/opengl-driver/lib:/run/opengl-driver-32/lib''; 
+      DISPLAY = ":0";
+      GPU_MAX_ALLOC_PERCENT = "100";
+      GPU_USE_SYNC_OBJECTS = "1";   
+    };
+    script = ''
+      MAC=$(${pkgs.nettools}/bin/ifconfig | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
 
+      ${pkgs.curl}/bin/curl -k https://raw.github.com/offlinehacker/miner.litecoin.si/master/cgminer.conf > /etc/cgminer.conf
+      ${pkgs.cgminer}/bin/cgminer -T -c /etc/cgminer.conf \
+        -o http://us.litecoinpool.org:9332 -u aircrack.$MAC -p x
+    '';
+  };
+  
   environment = {
    systemPackages = with pkgs; [
      cgminer
      git
      openssl
+     screen
    ];
+
+   shellInit = ''
+     export DISPLAY=:0
+     export GPU_MAX_ALLOC_PERCENT=100
+     export GPU_USE_SYNC_OBJECTS=1
+   '';
 
    etc.opencl = {
      source = "${pkgs.amdappsdk}/etc/OpenCL";
