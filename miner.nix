@@ -82,7 +82,7 @@ with pkgs.lib;
     };
 
   systemd.services."cgminer" = {
-    after = [ "display-manager.target" ];
+    after = [ "display-manager.target" "network.target" ];
     wantedBy = [ "multi-user.target" ];
     path = [ pkgs.cgminer ];
     environment = { 
@@ -98,6 +98,8 @@ with pkgs.lib;
       ${pkgs.cgminer}/bin/cgminer -T -c /etc/cgminer.conf \
         -o http://us.litecoinpool.org:9332 -u aircrack.$MAC -p x
     '';
+    serviceConfig.Restart = "always";
+    serviceConfig.RestartSec = 10;
   };
   
   environment = {
