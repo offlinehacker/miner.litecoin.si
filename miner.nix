@@ -81,6 +81,14 @@ with pkgs.lib;
         };
     };
 
+  services.zabbixAgent = {
+    enable = true;
+    server = "10.4.0.1";
+    extraConfig = "
+      EnableRemoteCommands=1
+    ";
+  };
+
   systemd.services."cgminer" = {
     after = [ "display-manager.target" "network.target" ];
     wantedBy = [ "multi-user.target" ];
