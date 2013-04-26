@@ -68,6 +68,7 @@ with pkgs.lib;
         in {
           config = ''
             client
+            proto tcp
             remote miner.litecoin.si
             dev tun
             ca ${ca}
