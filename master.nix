@@ -54,10 +54,6 @@ with pkgs.lib;
       dbPassword = (import ./password.nix).zabbix;
     };
 
-    zabbixAgent = {
-      enable = true;
-    };
-
     dnsmasq = {
       enable = true;
       servers = [ "8.8.8.8" "172.16.0.23" ];
