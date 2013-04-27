@@ -16,6 +16,8 @@ with pkgs.lib;
 
   environment.shellInit = ''export PATH=~/bin/:$PATH'';
 
+  networking.nameservers = [ "127.0.0.1" ];
+
   users.extraUsers.admin =
     { description = "me, the admin";
       home = "/home/admin";
@@ -56,6 +58,14 @@ with pkgs.lib;
       enable = true;
     };
 
+    dnsmasq = {
+      enable = true;
+      servers = [ "8.8.8.8" "172.16.0.23" ];
+      extraConfig = ''
+        addn-hosts=/etc/hosts.openvpn-clients
+      '';
+    };
+
     openvpn.servers = {
       server =
         let
@@ -78,13 +88,9 @@ with pkgs.lib;
 #
 # Changelog
 # 2006-10-13 BDL original
-
-# replace with a sub-domain of your domain, use a sub-domain to prevent VPN clients from stealing existing names
-DOMAIN=miner.litecoin.si
-
 HOSTS=/etc/hosts.openvpn-clients
 
-h=$(basename "$HOSTS")
+h=$(${pkgs.coreutils}/bin/basename "$HOSTS")
 LOCKFILE="/var/run/$h.lock"
 
 IP="$2"
@@ -113,13 +119,10 @@ esac
 # serialise concurrent accesses
 [ -x lock ] && lock "$LOCKFILE"
 
-# clean up IP if we can
-[ -x ${nixpkgs.busybox}/bin/ipcalc ] && eval $(ipcalc "$IP")
-
-FQDN="$CN.$DOMAIN"
+FQDN="$CN"
 
 # busybox mktemp must have exactly six X's
-t=$(mktemp "/tmp/$h.XXXXXX")
+t=$(${pkgs.coreutils}/bin/mktemp "/tmp/$h.XXXXXX")
 if [ $? -ne 0 ]; then
     echo "$0: mktemp failed" >&2
     exit 1
@@ -129,31 +132,32 @@ fi
 case "$1" in
 
   add|update)
-    ${nixpkgs.gawk}/bin/awk '
+    ${pkgs.gawk}/bin/awk '
         # update/uncomment address|FQDN with new record, drop any duplicates:
         $2 == "'"$FQDN"'" \
             { if (!m) print "'"$IP"'\t'"$FQDN"'"; m=1; next }
         { print }
         END { if (!m) print "'"$IP"'\t'"$FQDN"'" }           # add new address to end
-    ' "$HOSTS" > "$t" && cat "$t" > "$HOSTS"
+    ' "$HOSTS" > "$t" && ${pkgs.coreutils}/bin/cat "$t" > "$HOSTS"
   ;;
 
   delete)
-    ${nixpkgs.gawk}/bin/awk '
+    ${pkgs.gawk}/bin/awk '
         # no FQDN, comment out all matching addresses (should only be one)
         $1 == "'"$IP"'" { print "#" $0; next }
         { print }
-    ' "$HOSTS" > "$t" && cat "$t" > "$HOSTS"
+    ' "$HOSTS" > "$t" && ${pkgs.coreutils}/bin/cat "$t" > "$HOSTS"
   ;;
 
 esac
 
 # signal dnsmasq to reread hosts file
-[ -f /var/run/dnsmasq.pid ] && kill -HUP $(cat /var/run/dnsmasq.pid)
+[ -f /var/run/dnsmasq.pid ] && ${pkgs.coreutils}/bin/kill -HUP $(${pkgs.coreutils}/bin/cat /var/run/dnsmasq.pid)
 
-rm "$t"
+${pkgs.coreutils}/bin/rm "$t"
 
 [ -x lock ] && lock -u "$LOCKFILE"
+exit 0
 '';
         in {
           config = ''
@@ -169,6 +173,8 @@ rm "$t"
             duplicate-cn
             username-as-common-name
             auth-user-pass-verify ${pkgs.writeScript "openvpn-server-verify" verify} via-file
+
+            learn-address ${pkgs.writeScript "openvpn-server-learn" learnAddresses}
             script-security 2
             log /var/log/openvpn.log
           '';
