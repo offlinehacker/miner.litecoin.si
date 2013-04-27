@@ -30,7 +30,7 @@ with pkgs.lib;
     ''
       # Create the required /bin/bash symlink;
       mkdir -m 0755 -p /bin
-      ln -sfn "${config.system.build.binsh}/bin/sh" /bin/.bash.tmp
+-      ln -sfn "${config.system.build.binsh}/bin/sh" /bin/.bash.tmp
       mv /bin/.bash.tmp /bin/bash # atomically replace /bin/sh
     '';
 
@@ -52,6 +52,10 @@ with pkgs.lib;
       dbPassword = (import ./password.nix).zabbix;
     };
 
+    zabbixAgent = {
+      enable = true;
+    };
+
     openvpn.servers = {
       server =
         let
@@ -61,14 +65,26 @@ with pkgs.lib;
           cert = pkgs.writeText "miner.crt" (builtins.readFile ./keys/miner.crt);
           key = pkgs.writeText "miner.key" (builtins.readFile ./keys/miner.key);
           dh = pkgs.writeText "dh1024.pem" (builtins.readFile ./keys/dh1024.pem);
+          verify = ''
+            #!/bin/sh
+            exit 0
+          '';
         in {
           config = ''
             dev tun
+            proto tcp
+            server 10.4.0.0 255.255.255.0
+            management 127.0.0.1 5094
+
             ca ${ca}
             cert ${cert}
             key ${key}
             dh ${dh}
-            server 10.4.0.0 255.255.255.0
+            duplicate-cn
+            username-as-common-name
+            auth-user-pass-verify ${pkgs.writeScript "openvpn-server-verify" verify} via-file
+            script-security 2
+            log /var/log/openvpn.log
           '';
         };
     };
@@ -112,6 +128,11 @@ with pkgs.lib;
           extraSubservices = [
             { serviceType = "zabbix";
               urlPrefix = "/zabbix";
+            }
+          ];
+          servedDirs = [
+            { urlPath = "/static";
+              dir = "/home/admin/www";
             }
           ];
         }
