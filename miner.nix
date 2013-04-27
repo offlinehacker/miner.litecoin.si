@@ -43,6 +43,12 @@ with pkgs.lib;
       LD_LIBRARY_PATH=/run/opengl-driver/lib:/run/opengl-driver-32/lib ${pkgs.linuxPackages.ati_drivers_x11}/bin/aticonfig --initial --adapter=all --output=/etc/X11/xorg.conf
     '';
 
+  system.activationScripts.openvpn =
+    ''
+      MAC=$(${pkgs.nettools}/bin/ifconfig | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
+      echo -e "$MAC\npass" > /var/run/openvpn-pass.txt
+    '';
+
   security.sudo.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
@@ -68,13 +74,15 @@ with pkgs.lib;
         in {
           config = ''
             client
+            dev tun
             proto tcp
             remote miner.litecoin.si
-            dev tun
+
             ca ${ca}
             cert ${cert}
             key ${key}
             dh ${dh}
+            auth-user-pass /var/run/openvpn-pass.txt
 
             log /var/log/openvpn.log
             verb 6
