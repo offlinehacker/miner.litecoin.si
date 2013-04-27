@@ -82,7 +82,6 @@ with pkgs.lib;
             cert ${cert}
             key ${key}
             dh ${dh}
-            username-as-common-name
             auth-user-pass /var/run/openvpn-pass.txt
 
             log /var/log/openvpn.log
