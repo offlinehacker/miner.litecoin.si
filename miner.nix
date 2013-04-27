@@ -46,7 +46,11 @@ with pkgs.lib;
   system.activationScripts.openvpn =
     ''
       MAC=$(${pkgs.nettools}/bin/ifconfig | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
+<<<<<<< HEAD
       echo "$MAC\npass" > /var/run/openvpn-pass.txt
+=======
+      echo -e "$MAC.$(dnsdomainname)\npass" > /var/run/openvpn-pass.txt
+>>>>>>> aa4c1ad082dbcd0ad5a003ba5816ab778971f5f7
     '';
 
   security.sudo.enable = true;
@@ -82,7 +86,10 @@ with pkgs.lib;
             cert ${cert}
             key ${key}
             dh ${dh}
+<<<<<<< HEAD
             username-as-common-name
+=======
+>>>>>>> aa4c1ad082dbcd0ad5a003ba5816ab778971f5f7
             auth-user-pass /var/run/openvpn-pass.txt
 
             log /var/log/openvpn.log
