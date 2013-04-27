@@ -141,5 +141,10 @@ with pkgs.lib;
      source = "${pkgs.amdappsdk}/etc/OpenCL";
      target = "OpenCL";
    };
+
+   etc.hostconf = {
+     source = pkgs.writeText "host.conf" "order hosts,bind";
+     target = "host.conf";
+   };
   };
 }
