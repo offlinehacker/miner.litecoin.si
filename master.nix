@@ -14,7 +14,10 @@ with pkgs.lib;
   security.sudo.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
-  environment.shellInit = ''export PATH=~/bin/:$PATH'';
+  environment.shellInit = ''
+    export PATH=~/bin/:$PATH
+    export HOSTFILE="/etc/hosts.openvpn-clients"
+  '';
 
   networking.nameservers = [ "127.0.0.1" ];
 
