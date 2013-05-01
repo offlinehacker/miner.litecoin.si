@@ -12,7 +12,6 @@ with pkgs.lib;
     ];
 
   networking.nameservers = [ "8.8.8.8" "4.4.4.4" ];
-  networking.extraHosts = ''10.4.0.1 miner.litecoin.si'';
 
   # Select internationalisation properties.
   i18n = {
@@ -42,12 +41,12 @@ with pkgs.lib;
     '';
 
   system.activationScripts.openvpn = ''
-      MAC=$(${pkgs.nettools}/bin/ifconfig | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
+      MAC=$(${pkgs.nettools}/bin/ifconfig -a | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
       echo -e "$MAC.$(dnsdomainname)\npass" > /var/run/openvpn-pass.txt
     '';
 
   system.activationScripts.hostname = ''
-      MAC=$(${pkgs.nettools}/bin/ifconfig | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
+      MAC=$(${pkgs.nettools}/bin/ifconfig -a | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
       hostname "$MAC.miner.litecoin.si"
     '';
 
@@ -113,7 +112,7 @@ with pkgs.lib;
       GPU_USE_SYNC_OBJECTS = "1";   
     };
     script = ''
-      MAC=$(${pkgs.nettools}/bin/ifconfig | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
+      MAC=$(${pkgs.nettools}/bin/ifconfig -a | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
 
       ${pkgs.curl}/bin/curl -k https://raw.github.com/offlinehacker/miner.litecoin.si/master/cgminer.conf > /etc/cgminer.conf
       ${pkgs.cgminer}/bin/cgminer -T -c /etc/cgminer.conf \
@@ -129,6 +128,7 @@ with pkgs.lib;
      git
      openssl
      screen
+     nmap
    ];
 
    shellInit = ''
@@ -140,11 +140,6 @@ with pkgs.lib;
    etc.opencl = {
      source = "${pkgs.amdappsdk}/etc/OpenCL";
      target = "OpenCL";
-   };
-
-   etc.hostconf = {
-     source = pkgs.writeText "host.conf" "order hosts,bind";
-     target = "host.conf";
    };
   };
 }
