@@ -112,9 +112,17 @@ with pkgs.lib;
     script = ''
       MAC=$(${pkgs.nettools}/bin/ifconfig -a | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
 
-      ${pkgs.curl}/bin/curl -k https://raw.github.com/offlinehacker/miner.litecoin.si/master/cgminer.conf > /etc/cgminer.conf
-      ${pkgs.cgminer}/bin/cgminer -T -c /etc/cgminer.conf \
-        -o http://us.litecoinpool.org:9332 -u aircrack.$MAC -p x
+      CONFIG="https://raw.github.com/offlinehacker/miner.litecoin.si/master/cgminer.conf"
+      PARAMS_CONFIG="https://raw.github.com/offlinehacker/miner.litecoin.si/master/cgminer.params"
+
+      if [ 200 -eq $(${pkgs.curl}/bin/curl -k --write-out %{http_code} --silent --output /dev/null $PARAMS_CONFIG.$MAC) ]; then
+        PARAMS=$(${pkgs.curl}/bin/curl -k $PARAMS_CONFIG.$MAC)
+      else
+        PARAMS=$(${pkgs.curl}/bin/curl -k $PARAMS_CONFIG)
+      fi
+
+      ${pkgs.curl}/bin/curl --silent -k $CONFIG > /etc/cgminer.conf
+      ${pkgs.cgminer}/bin/cgminer -T -c /etc/cgminer.conf $(eval echo $PARAMS)
     '';
     serviceConfig.Restart = "always";
     serviceConfig.RestartSec = 10;
