@@ -1,1 +1,1 @@
--o http://fc.ltcoin.net:6666 -u offlinehacker.$MAC -p x
+-o stratum+tcp://fcpool.com:3333 -u offlinehacker.$MAC -p x
