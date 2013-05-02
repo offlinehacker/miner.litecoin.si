@@ -40,16 +40,6 @@ with pkgs.lib;
       LD_LIBRARY_PATH=/run/opengl-driver/lib:/run/opengl-driver-32/lib ${pkgs.linuxPackages.ati_drivers_x11}/bin/aticonfig --initial --adapter=all --output=/etc/X11/xorg.conf
     '';
 
-  system.activationScripts.openvpn = ''
-      MAC=$(${pkgs.nettools}/bin/ifconfig -a | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
-      echo -e "$MAC.$(dnsdomainname)\npass" > /var/run/openvpn-pass.txt
-    '';
-
-  system.activationScripts.hostname = ''
-      MAC=$(${pkgs.nettools}/bin/ifconfig -a | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr -d ":")
-      hostname "$MAC.miner.litecoin.si"
-    '';
-
   security.sudo.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
@@ -90,6 +80,14 @@ with pkgs.lib;
           '';
         };
     };
+
+  systemd.services."openvpn-client".preStart = ''
+      MAC=$(cat /sys/class/net/enp3s0/address | tr -d ":")
+      echo -e "$MAC.miner.litecoin.si\npass" > /var/run/openvpn-pass.txt
+
+      # TODO: put this somewhere else
+      hostname "$MAC.miner.litecoin.si"
+  '';
 
   services.zabbixAgent = {
     enable = true;
