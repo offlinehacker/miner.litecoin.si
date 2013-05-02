@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 POOL="http://feathercoin.is-a-geek.com:8341"
 USERNAME="offlinehacker"
 PASSWORD="x"
