@@ -1,1 +1,1 @@
--o http://p2pool.org:19327 -u 6xWzM7kFVWdTNBRWRfU6ExncwsgFwNuaHP -p x --fix-protocol
+-o stratum+tcp://fcpool.com:3333 -u offlinehacker.$MAC -p x
