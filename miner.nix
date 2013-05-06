@@ -74,9 +74,6 @@ with pkgs.lib;
             key ${key}
             dh ${dh}
             auth-user-pass /var/run/openvpn-pass.txt
-
-            log /var/log/openvpn.log
-            verb 6
           '';
         };
     };
