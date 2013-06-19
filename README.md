@@ -22,14 +22,22 @@ Installation:
 	git config diff.encrypt.textconv "gitcrypt diff"
 	git reset --hard HEAD
 
-	# Install config
-	ln -s ../miner.bitcoin.si/bin ../bin
-	sudo ln -fs $(pwd)/<config name>.nix /etc/nixos/configuration.nix
-	sudo ln -fs $(pwd)/password.nix /etc/nixos/password.nix
-    sudo ln -fs $(pwd)/keys /etc/nixos/keys
-
-	# Rebuild system
-	sudo nixos-rebuild switch
 
 NOTE: If you are having problems with decrypting files, you should remove them and
 then perform `git reset --hard HEAD` again.
+
+Deployment:
+-----------
+
+	# Create a deployment with nixops
+	nixops-create ./minerops.nix ./minerops-physical.nix -d minerops
+
+	# Deploy your systems
+	nixops deploy -d minerops
+
+TODO:
+-----
+
+- Create a live install cd for automatic installations
+- Switch master deployment from phyisical to ec2
+- Fix ati xserver config generation to support multiple GPU-s

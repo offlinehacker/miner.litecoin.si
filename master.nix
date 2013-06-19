@@ -2,17 +2,13 @@
 
 with pkgs.lib;
 
-{
+let
+  domain = "miner.litecoin.si";
+in {
+
   require = [
-    "${modulesPath}/virtualisation/amazon-image.nix" 
+    ./base.nix
   ];
-
-  swapDevices = [
-    { device = "/var/swapfile"; }
-  ];
-
-  security.sudo.enable = true;
-  security.sudo.wheelNeedsPassword = false;
 
   environment.shellInit = ''
     export PATH=~/bin/:$PATH
@@ -20,24 +16,10 @@ with pkgs.lib;
   '';
 
   networking.nameservers = [ "127.0.0.1" ];
-
-  users.extraUsers.admin =
-    { description = "me, the admin";
-      home = "/home/admin";
-      createHome = true;
-      useDefaultShell = true;
-      extraGroups = ["wheel" "users"];
-      group = "users";
-      openssh.authorizedKeys.keys = (import ./password.nix).adminKeys;
-    };
-
-  system.activationScripts.binbash = stringAfter [ "binsh" ]
-    ''
-      # Create the required /bin/bash symlink;
-      mkdir -m 0755 -p /bin
--      ln -sfn "${config.system.build.binsh}/bin/sh" /bin/.bash.tmp
-      mv /bin/.bash.tmp /bin/bash # atomically replace /bin/sh
-    '';
+  networking.domain = domain;
+  boot.kernel.sysctl = {
+    "net.ipv4.ip_forward" = true;
+  };
 
   services = {
 
@@ -52,11 +34,6 @@ with pkgs.lib;
     # turn off rate limiting for journald
     journald.rateLimitBurst = 0;
 
-    zabbixServer = {
-      enable = true;
-      dbPassword = (import ./password.nix).zabbix;
-    };
-
     dnsmasq = {
       enable = true;
       servers = [ "8.8.8.8" "172.16.0.23" ];
@@ -70,7 +47,8 @@ with pkgs.lib;
         let
           # We should write text files, to maintain production stable system
           # if user changes config
-          ca = pkgs.writeText "ca.crt" (builtins.readFile ./keys/ca.crt);
+          ca = pkgs.writeText "ca.crt" ((builtins.readFile ./keys/ca.crt) +
+                                        (builtins.readFile ./keys/ca_xtruder.crt));
           cert = pkgs.writeText "miner.crt" (builtins.readFile ./keys/miner.crt);
           key = pkgs.writeText "miner.key" (builtins.readFile ./keys/miner.key);
           dh = pkgs.writeText "dh1024.pem" (builtins.readFile ./keys/dh1024.pem);
@@ -171,6 +149,7 @@ exit 0
             dh ${dh}
             duplicate-cn
             username-as-common-name
+            client-to-client
             auth-user-pass-verify ${pkgs.writeScript "openvpn-server-verify" verify} via-file
 
             learn-address ${pkgs.writeScript "openvpn-server-learn" learnAddresses}
@@ -178,6 +157,10 @@ exit 0
             log /var/log/openvpn.log
           '';
         };
+    };
+
+    mysql = {
+      enable = true;
     };
 
     httpd = {
@@ -217,8 +200,8 @@ exit 0
         { hostName = "miner.litecoin.si";
           enableUserDir = true;
           extraSubservices = [
-            { serviceType = "zabbix";
-              urlPrefix = "/zabbix";
+            { serviceType = "anubis";
+              urlPrefix = "/anubis";
             }
           ];
           servedDirs = [
@@ -231,4 +214,5 @@ exit 0
     };
 
   };
+
 }

